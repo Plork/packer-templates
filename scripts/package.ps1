@@ -9,11 +9,11 @@ Update-ExecutionPolicy -Policy Unrestricted
 
 Write-BoxstarterMessage "Removing unused features..."
 Remove-WindowsFeature -Name 'Powershell-ISE'
-Get-WindowsFeature | 
-? { $_.InstallState -eq 'Available' } | 
+Get-WindowsFeature |
+? { $_.InstallState -eq 'Available' } |
 Uninstall-WindowsFeature -Remove
 
-Install-WindowsUpdate -AcceptEula
+#Install-WindowsUpdate -AcceptEula
 if(Test-PendingReboot){ Invoke-Reboot }
 
 Write-BoxstarterMessage "Cleaning SxS..."
@@ -39,9 +39,11 @@ Write-BoxstarterMessage "defragging..."
 Optimize-Volume -DriveLetter C
 
 Write-BoxstarterMessage "0ing out empty space..."
-wget http://download.sysinternals.com/files/SDelete.zip -OutFile sdelete.zip
-[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.FileSystem")
-[System.IO.Compression.ZipFile]::ExtractToDirectory("sdelete.zip", ".") 
+if (-not (Test-Path "sdelete.exe")){
+  wget http://download.sysinternals.com/files/SDelete.zip -OutFile sdelete.zip
+  [System.Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.FileSystem")
+  [System.IO.Compression.ZipFile]::ExtractToDirectory("sdelete.zip", ".")
+}
 ./sdelete.exe /accepteula -z c:
 
 mkdir C:\Windows\Panther\Unattend
@@ -51,6 +53,12 @@ Write-BoxstarterMessage "Recreate pagefile after sysprep"
 $System = GWMI Win32_ComputerSystem -EnableAllPrivileges
 $System.AutomaticManagedPagefile = $true
 $System.Put()
+
+Set-ItemProperty -Path "HKCU:\Console\" -name QuickEdit -val 0
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\" -name StartMenuAdminTools -val 1
+
+cinst powershell -pre
+if(Test-PendingReboot){ Invoke-Reboot }
 
 Write-BoxstarterMessage "Setting up winrm"
 Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
