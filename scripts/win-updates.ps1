@@ -2,20 +2,35 @@ param($global:RestartRequired=0,
         $global:MoreUpdates=0,
         $global:MaxCycles=5)
 
+function Configure-Winrm {
+  Write-Host "Enabling WINRM-HTTP Firewallrule"
+  Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
+  Enable-WSManCredSSP -Force -Role Server
+
+  Write-Host "Configure WINRM Service"
+  Enable-PSRemoting -Force -SkipNetworkProfileCheck
+  winrm set winrm/config '@{MaxTimeoutms="1800000"}'
+  winrm set winrm/config/client/auth '@{Basic="true"}'
+  winrm set winrm/config/service/auth '@{Basic="true"}'
+  winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+  winrm set winrm/config/winrs '@{MaxMemoryPerShellMB="512"}'
+
+}
+
 function Check-ContinueRestartOrEnd() {
     $RegistryKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
     $RegistryEntry = "InstallWindowsUpdates"
     switch ($global:RestartRequired) {
-        0 {			
+        0 {
             $prop = (Get-ItemProperty $RegistryKey).$RegistryEntry
             if ($prop) {
                 Write-Host "Restart Registry Entry Exists - Removing It"
                 Remove-ItemProperty -Path $RegistryKey -Name $RegistryEntry -ErrorAction SilentlyContinue
             }
-            
+
             Write-Host "No Restart Required"
             Check-WindowsUpdates
-            
+
             if (($global:MoreUpdates -eq 1) -and ($script:Cycles -le $global:MaxCycles)) {
                 Install-WindowsUpdates
             } elseif ($script:Cycles -gt $global:MaxCycles) {
@@ -33,12 +48,12 @@ function Check-ContinueRestartOrEnd() {
             } else {
                 Write-Host "Restart Registry Entry Exists Already"
             }
-            
+
             Write-Host "Restart Required - Restarting..."
             Restart-Computer
         }
-        default { 
-            Write-Host "Unsure If A Restart Is Required" 
+        default {
+            Write-Host "Unsure If A Restart Is Required"
             break
         }
     }
@@ -62,14 +77,14 @@ function Install-WindowsUpdates() {
                     [bool]$addThisUpdate = $true
                 }
             }
-        
+
             if ([bool]$addThisUpdate) {
                 Write-Host "Adding: $($Update.Title)"
                 $UpdatesToDownload.Add($Update) |Out-Null
             }
 		}
     }
-    
+
     if ($UpdatesToDownload.Count -eq 0) {
         Write-Host "No Updates To Download..."
     } else {
@@ -78,7 +93,7 @@ function Install-WindowsUpdates() {
         $Downloader.Updates = $UpdatesToDownload
         $Downloader.Download()
     }
-	
+
     $UpdatesToInstall = New-Object -ComObject 'Microsoft.Update.UpdateColl'
     [bool]$rebootMayBeRequired = $false
     Write-Host 'The following updates are downloaded and ready to be installed:'
@@ -86,13 +101,13 @@ function Install-WindowsUpdates() {
         if (($Update.IsDownloaded)) {
             Write-Host "> $($Update.Title)"
             $UpdatesToInstall.Add($Update) |Out-Null
-              
+
             if ($Update.InstallationBehavior.RebootBehavior -gt 0){
                 [bool]$rebootMayBeRequired = $true
             }
         }
     }
-    
+
     if ($UpdatesToInstall.Count -eq 0) {
         Write-Host 'No updates available to install...'
         $global:MoreUpdates=0
@@ -105,13 +120,13 @@ function Install-WindowsUpdates() {
         Write-Host 'These updates may require a reboot'
         $global:RestartRequired=1
     }
-	
+
     Write-Host 'Installing updates...'
-  
+
     $Installer = $script:UpdateSession.CreateUpdateInstaller()
     $Installer.Updates = $UpdatesToInstall
     $InstallationResult = $Installer.Install()
-  
+
     Write-Host "Installation Result: $($InstallationResult.ResultCode)"
     Write-Host "Reboot Required: $($InstallationResult.RebootRequired)"
     Write-Host 'Listing of updates installed and individual installation results:'
@@ -120,30 +135,30 @@ function Install-WindowsUpdates() {
     } else {
         $global:RestartRequired=0
     }
-    
+
     for($i=0; $i -lt $UpdatesToInstall.Count; $i++) {
         New-Object -TypeName PSObject -Property @{
             Title = $UpdatesToInstall.Item($i).Title
             Result = $InstallationResult.GetUpdateResult($i).ResultCode
         }
     }
-	
+
     Check-ContinueRestartOrEnd
 }
 
 function Check-WindowsUpdates() {
     Write-Host "Checking For Windows Updates"
     $Username = $env:USERDOMAIN + "\" + $env:USERNAME
- 
+
     New-EventLog -Source $ScriptName -LogName 'Windows Powershell' -ErrorAction SilentlyContinue
- 
+
     $Message = "Script: " + $ScriptPath + "`nScript User: " + $Username + "`nStarted: " + (Get-Date).toString()
 
     Write-EventLog -LogName 'Windows Powershell' -Source $ScriptName -EventID "104" -EntryType "Information" -Message $Message
     Write-Host $Message
 
     $script:UpdateSearcher = $script:UpdateSession.CreateUpdateSearcher()
-    $script:SearchResult = $script:UpdateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0")      
+    $script:SearchResult = $script:UpdateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0")
     if ($SearchResult.Updates.Count -ne 0) {
         $script:SearchResult.Updates |Select-Object -Property Title, Description, SupportUrl, UninstallationNotes, RebootRequired, EulaAccepted |Format-List
         $global:MoreUpdates=1
@@ -167,4 +182,5 @@ if ($global:MoreUpdates -eq 1) {
     Install-WindowsUpdates
 } else {
     Check-ContinueRestartOrEnd
+    Configure-Winrm
 }

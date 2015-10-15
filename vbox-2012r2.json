@@ -26,8 +26,6 @@
         "./answer_files/2012_r2{{user `core`}}/Autounattend.xml",
         "./scripts/postunattend.xml",
         "./scripts/oracle-cert.cer",
-        "./scripts/registrysettings.cmd",
-        "./scripts/set-winrm.ps1",
         "./scripts/win-updates.ps1"
       ]
     }
@@ -50,7 +48,8 @@
     {
       "type":"windows-shell",
       "scripts": [
-        "./scripts/enable-rdp.bat"
+        "./scripts/enable-rdp.bat",
+        "./scripts/registry-settings.bat"
       ]
     },
     {
