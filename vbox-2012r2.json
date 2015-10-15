@@ -2,6 +2,7 @@
   "builders": [
     {
       "type": "virtualbox-iso",
+      "name": "base2012r2-vbox",
       "vboxmanage": [
         [ "modifyvm", "{{.Name}}", "--natpf1", "guest_winrm,tcp,,55985,,5985" ],
         [ "modifyvm", "{{.Name}}", "--memory", "2048" ],
@@ -17,15 +18,49 @@
       "winrm_username": "vagrant",
       "winrm_password": "vagrant",
       "winrm_timeout": "6h",
+      "boot_wait": "1m",
       "guest_additions_mode": "disable",
       "shutdown_command": "C:/windows/system32/sysprep/sysprep.exe /generalize /oobe /unattend:C:/Windows/Panther/Unattend/unattend.xml /quiet /shutdown",
       "shutdown_timeout": "15m",
       "floppy_files": [
-        "answer_files/2012_r2{{user `core`}}/Autounattend.xml",
-        "scripts/postunattend.xml",
-        "scripts/boxstarter.ps1",
-        "scripts/package.ps1"
+        "./answer_files/2012_r2{{user `core`}}/Autounattend.xml",
+        "./scripts/postunattend.xml",
+        "./scripts/oracle-cert.cer",
+        "./scripts/registrysettings.cmd",
+        "./scripts/set-winrm.ps1",
+        "./scripts/win-updates.ps1"
       ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type":"powershell",
+      "inline": [
+        "(iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1')))>$null 2>&1",
+        "choco install 7zip -y",
+        "choco install powershell -pre -y"
+      ]
+    },
+    {
+      "type": "powershell",
+      "scripts": [
+        "./scripts/virtualbox-guest-tools.ps1"
+      ]
+    },
+    {
+      "type":"windows-shell",
+      "scripts": [
+        "./scripts/enable-rdp.bat"
+      ]
+    },
+    {
+      "type": "powershell",
+      "scripts": [
+        "./scripts/cleanup.ps1"
+      ]
+    },
+    {
+      "type": "windows-restart"
     }
   ],
   "post-processors": [
