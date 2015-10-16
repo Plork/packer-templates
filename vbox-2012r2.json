@@ -6,7 +6,8 @@
         [ "modifyvm", "{{.Name}}", "--natpf1", "guest_winrm,tcp,,55985,,5985" ],
         [ "modifyvm", "{{.Name}}", "--memory", "2048" ],
         [ "modifyvm", "{{.Name}}", "--vram", "72" ],
-        [ "modifyvm", "{{.Name}}", "--cpus", "2" ]
+        [ "modifyvm", "{{.Name}}", "--cpus", "2" ],
+        [ "setextradata", "global", "GUI/SuppressMessages", "all" ]
       ],
       "guest_os_type": "Windows2012_64",
       "headless": "{{ user `headless` }}",
@@ -34,9 +35,19 @@
       "inline": [
         "(iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1')))>$null 2>&1",
         "choco install vboxguestadditions.install -y",
-        "choco install 7zip -y",
+        "choco install 7zip -y"
+      ]
+    },
+    {
+      "type":"powershell",
+      "elevated_user": "{{user `user`}}",
+      "elevated_password": "{{user `password`}}",
+      "inline": [
         "choco install powershell -pre -y"
       ]
+    },
+    {
+      "type": "windows-restart"
     },
     {
       "type":"windows-shell",

@@ -253,14 +253,14 @@ $script:Cycles = 0
 
 Use-RunAs
 
-Check-WindowsUpdates
+#Check-WindowsUpdates
 if ($global:MoreUpdates -eq 1)
 {
     #Install-WindowsUpdates
 }
 else
 {
-    Check-ContinueRestartOrEnd
+    #Check-ContinueRestartOrEnd
 }
 
 Configure-Winrm
