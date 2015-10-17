@@ -9,12 +9,11 @@ $CurrentPageFile.MaximumSize = 512
 $null = $CurrentPageFile.Put()
 
 Write-Output -InputObject 'Removing unused Windows features'
-Remove-WindowsFeature -Name 'Powershell-ISE'
-Get-WindowsFeature |
+$null = Remove-WindowsFeature -Name 'Powershell-ISE'
+$null = Get-WindowsFeature |
 Where-Object -FilterScript {
     $_.InstallState -eq 'Available'
-} |
-Uninstall-WindowsFeature -Remove
+} | Uninstall-WindowsFeature -Remove
 
 Write-Output -InputObject 'Cleanup update uninstallers'
 $null = Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1
@@ -30,7 +29,7 @@ Write-Output -InputObject 'Remove logs and temp before Sysprep'
 ) | ForEach-Object -Process {
     if(Test-Path $_)
     {
-        takeown.exe /d Y /R /f $_
+        $null = takeown.exe /d Y /R /f $_
         $null = icacls.exe $_ /GRANT:r administrators:F /T /c /q  2>&1
         $null = Remove-Item $_ -Recurse -Force -ErrorAction SilentlyContinue
     }
@@ -38,10 +37,10 @@ Write-Output -InputObject 'Remove logs and temp before Sysprep'
 
 Write-Output -InputObject '0ing out empty space'
 Invoke-WebRequest -Uri http://download.sysinternals.com/files/SDelete.zip -OutFile sdelete.zip
-[System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
-[System.IO.Compression.ZipFile]::ExtractToDirectory('sdelete.zip', '.')
+$null = [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
+$null = [System.IO.Compression.ZipFile]::ExtractToDirectory('sdelete.zip', '.')
 
-./sdelete.exe /accepteula -z c:
+$null= ./sdelete.exe /accepteula -z c:
 
 Write-Output -InputObject 'Copying unattend for sysprep'
 $null = mkdir -Path C:\Windows\Panther\Unattend

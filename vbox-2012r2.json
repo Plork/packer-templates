@@ -25,6 +25,7 @@
       "floppy_files": [
         "./answer_files/2012_r2/Autounattend.xml",
         "./scripts/postunattend.xml",
+        "./scripts/oracle-cert.cer",
         "./scripts/win-updates.ps1"
       ]
     }
@@ -34,7 +35,6 @@
       "type":"powershell",
       "inline": [
         "(iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1')))>$null 2>&1",
-        "choco install vboxguestadditions.install -y",
         "choco install 7zip -y"
       ]
     },
@@ -55,6 +55,13 @@
         "./scripts/enable-rdp.bat",
         "./scripts/registry-settings.bat"
       ]
+    },
+    {
+      "type": "powershell",
+      "scripts": [
+        "./scripts/virtualbox-guest-tools.ps1"
+      ],
+      "only": ["virtualbox-iso"]
     },
     {
       "type": "powershell",
