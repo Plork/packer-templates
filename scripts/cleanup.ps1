@@ -1,23 +1,24 @@
-# Reduce PageFile size
-$System = GWMI Win32_ComputerSystem -EnableAllPrivileges
+Write-Output -InputObject 'Reduce PageFile size'
+$System = Get-WmiObject -Class Win32_ComputerSystem -EnableAllPrivileges
 $System.AutomaticManagedPagefile = $False
-$System.Put()
+$null = $System.Put()
 
-$CurrentPageFile = gwmi -query "select * from Win32_PageFileSetting where name='c:\\pagefile.sys'"
+$CurrentPageFile = Get-WmiObject -Query "select * from Win32_PageFileSetting where name='c:\\pagefile.sys'"
 $CurrentPageFile.InitialSize = 512
 $CurrentPageFile.MaximumSize = 512
-$CurrentPageFile.Put()
+$null = $CurrentPageFile.Put()
 
-# Remove unused features
-Remove-WindowsFeature -Name 'Powershell-ISE'
-Get-WindowsFeature |
-? { $_.InstallState -eq 'Available' } |
-Uninstall-WindowsFeature -Remove
+Write-Output -InputObject 'Removing unused Windows features'
+$null = Remove-WindowsFeature -Name 'Powershell-ISE'
+$null = Get-WindowsFeature |
+Where-Object -FilterScript {
+    $_.InstallState -eq 'Available'
+} | Uninstall-WindowsFeature -Remove
 
-# Cleanup update uninstallers
-Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
+Write-Output -InputObject 'Cleanup update uninstallers'
+$null = Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1
 
-# Remove logs and temp before Sysprep
+Write-Output -InputObject 'Remove logs and temp before Sysprep'
 @(
     "$env:localappdata\Nuget",
     "$env:localappdata\temp\*",
@@ -25,20 +26,22 @@ Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
     "$env:windir\panther",
     "$env:windir\temp\*",
     "$env:windir\winsxs\manifestcache"
-) | % {
-        if(Test-Path $_) {
-            Takeown /d Y /R /f $_
-            Icacls $_ /GRANT:r administrators:F /T /c /q  2>&1 | Out-Null
-            Remove-Item $_ -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
-        }
+) | ForEach-Object -Process {
+    if(Test-Path $_)
+    {
+        $null = takeown.exe /d Y /R /f $_
+        $null = icacls.exe $_ /GRANT:r administrators:F /T /c /q  2>&1
+        $null = Remove-Item $_ -Recurse -Force -ErrorAction SilentlyContinue
     }
+}
 
-# 0ing out empty space
-wget http://download.sysinternals.com/files/SDelete.zip -OutFile sdelete.zip
-[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.FileSystem")
-[System.IO.Compression.ZipFile]::ExtractToDirectory("sdelete.zip", ".")
+Write-Output -InputObject '0ing out empty space'
+Invoke-WebRequest -Uri http://download.sysinternals.com/files/SDelete.zip -OutFile sdelete.zip
+$null = [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
+$null = [System.IO.Compression.ZipFile]::ExtractToDirectory('sdelete.zip', '.')
 
-./sdelete.exe /accepteula -z c:
+$null= ./sdelete.exe /accepteula -z c:
 
-mkdir C:\Windows\Panther\Unattend
-copy-item a:\postunattend.xml C:\Windows\Panther\Unattend\unattend.xml
+Write-Output -InputObject 'Copying unattend for sysprep'
+$null = mkdir -Path C:\Windows\Panther\Unattend
+$null = Copy-Item -Path a:\postunattend.xml -Destination C:\Windows\Panther\Unattend\unattend.xml
