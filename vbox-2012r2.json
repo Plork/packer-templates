@@ -69,8 +69,8 @@
   "post-processors": [
     {
       "type": "vagrant",
-      "keep_input_artifact": true,
-      "output": "windows2012r2min-{{.Provider}}.box",
+      "keep_input_artifact": false,
+      "output": "output-virtualbox-box/windows2012r2min-{{.Provider}}.box",
       "vagrantfile_template": "vagrantfile-windows.template"
     }
   ],
