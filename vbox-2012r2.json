@@ -25,8 +25,8 @@
       "floppy_files": [
         "./answer_files/2012_r2/Autounattend.xml",
         "./scripts/postunattend.xml",
-        "./scripts/oracle-cert.cer",
-        "./scripts/win-updates.ps1"
+        "./scripts/win-updates.ps1",
+        "./scripts/set-wsusserver.bat"
       ]
     }
   ],
@@ -34,8 +34,10 @@
     {
       "type":"powershell",
       "inline": [
-        "(iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1')))>$null 2>&1",
-        "choco install 7zip -y"
+        "(iex ((new-object net.webclient).DownloadString('http://artifactory.otas.nv/chocoinstall.ps1')))>$null 2>&1",
+        "choco install 7zip -y",
+        "choco install telnet-client -source windowsfeatures -y",
+        "choco install Net-Framework-Core -source windowsfeatures -y"
       ]
     },
     {
@@ -53,19 +55,22 @@
       "type":"windows-shell",
       "scripts": [
         "./scripts/enable-rdp.bat",
+        "./scripts/disable-tasks.bat",
+        "./scripts/perfomance-tuning.bat",
         "./scripts/registry-settings.bat"
       ]
     },
     {
-      "type": "powershell",
-      "scripts": [
-        "./scripts/virtualbox-guest-tools.ps1"
+      "type":"powershell",
+      "inline": [
+        "choco install VBoxGuestAdditions.install -y"
       ],
       "only": ["virtualbox-iso"]
     },
     {
       "type": "powershell",
       "scripts": [
+        "./scripts/disable-services.ps1",
         "./scripts/cleanup.ps1"
       ]
     },
@@ -77,7 +82,7 @@
     {
       "type": "vagrant",
       "keep_input_artifact": false,
-      "output": "output-virtualbox-box/windows2012r2min-{{.Provider}}.box",
+      "output": "output-virtualbox-box/windows2012r2min-{{.Provider}}-{{user `version`}}.box",
       "vagrantfile_template": "vagrantfile-windows.template"
     }
   ],
@@ -85,7 +90,7 @@
     "user": "vagrant",
     "password": "vagrant",
     "headless": "false",
-    "iso_checksum": "849734f37346385dac2c101e4aacba4626bb141c",
-    "iso_url": "http://care.dlservice.microsoft.com/dl/download/6/2/A/62A76ABB-9990-4EFC-A4FE-C7D698DAEB96/9600.17050.WINBLUE_REFRESH.140317-1640_X64FRE_SERVER_EVAL_EN-US-IR3_SSS_X64FREE_EN-US_DV9.ISO"
+    "iso_checksum": "78bff6565f178ed08ab534397fe44845",
+    "iso_url": "iso/en_windows_server_2012_r2_with_update_x64_dvd_6052708.iso"
   }
 }

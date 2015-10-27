@@ -125,12 +125,24 @@
             </AutoLogon>
       <FirstLogonCommands>
         <SynchronousCommand wcm:action="add">
+            <CommandLine>cmd.exe /c a:\set-wsusserver.bat</CommandLine>
+            <Description>Set Wsus Server</Description>
+            <Order>1</Order>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
             <CommandLine>cmd.exe /c C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -File a:\win-updates.ps1</CommandLine>
             <Description>Install Windows Updates</Description>
-            <Order>1</Order>
+            <Order>2</Order>
             <RequiresUserInput>true</RequiresUserInput>
         </SynchronousCommand>
       </FirstLogonCommands>
+    </component>
+    <component name="Microsoft-Windows-IE-InternetExplorer" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <Home_Page>about:blank</Home_Page>
+        <DisableFirstRunWizard>false</DisableFirstRunWizard>
+    </component>
+    <component name="Microsoft-Windows-SystemRestore-Main" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <DisableSR>1</DisableSR>
     </component>
   </settings>
     <settings pass="specialize">
@@ -144,5 +156,5 @@
         <component xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="Microsoft-Windows-OutOfBoxExperience" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
             <DoNotOpenInitialConfigurationTasksAtLogon>true</DoNotOpenInitialConfigurationTasksAtLogon>
         </component>
-    </settings>   
+    </settings>
 </unattend>
