@@ -1,0 +1,124 @@
+{
+  "builders": [
+    {
+      "boot_wait": "1m",
+      "communicator": "winrm",
+      "disk_size": "{{ user `disk_size` }}",
+      "floppy_files": [
+        "./answer_files/2012_r2/Autounattend.xml",
+        "./answer_files/2012_r2/postunattend.xml",
+        "./floppy/windows/win-updates.ps1"
+      ],
+      "guest_os_type": "{{ user `virtualbox_guest_os_type` }}",
+      "headless": "{{ user `headless` }}",
+      "http_proxy": "{{env `http_proxy`}}",
+      "https_proxy": "{{env `https_proxy`}}",
+      "iso_checksum": "{{ user `iso_checksum` }}",
+      "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+      "iso_urls": [
+        "{{ user `iso_path` }}/{{ user `iso_name` }}",
+        "{{ user `iso_url` }}"
+      ],
+      "output_directory": "output-{{ user `vm_name` }}-virtualbox-iso",
+      "shutdown_command": "C:/windows/system32/sysprep/sysprep.exe /generalize /oobe /unattend:C:/Windows/Panther/Unattend/unattend.xml /quiet /shutdown",
+      "shutdown_timeout": "15m",
+      "type": "virtualbox-iso",
+      "vboxmanage": [
+        [
+          "modifyvm", "{{.Name}}", "--natpf1", "guest_winrm,tcp,,55985,,5985"
+        ],
+        [
+          "modifyvm", "{{.Name}}", "--memory", "{{ user `memory` }}"
+        ],
+        [
+          "modifyvm", "{{.Name}}", "--cpus", "{{ user `cpus` }}"
+        ],
+        [
+          "setextradata", "global", "GUI/SuppressMessages", "all"
+        ]
+      ],
+      "winrm_username": "{{user `user`}}",
+      "winrm_password": "{{user `password`}}",
+      "winrm_timeout": "6h"
+    }
+  ],
+  "provisioners": [
+    {
+      "type":"powershell",
+      "inline": [
+        "(iex ((new-object net.webclient).DownloadString('http://artifactory.otas.nv/chocoinstall.ps1')))>$null 2>&1",
+        "choco install 7zip -y",
+      ]
+    },
+    {
+      "type":"powershell",
+      "elevated_user": "{{user `user`}}",
+      "elevated_password": "{{user `password`}}",
+      "inline": [
+        "choco install powershell -pre -y"
+      ]
+    },
+    {
+      "type": "windows-restart"
+    },
+    {
+      "type":"windows-shell",
+      "scripts": [
+        "./scripts/windows/enable-rdp.bat",
+        "./scripts/windows/disable-tasks.bat",
+        "./scripts/windows/perfomance-tuning.bat",
+        "./scripts/windows/registry-settings.bat"
+      ]
+    },
+    {
+      "type":"powershell",
+      "inline": [
+        "choco install VBoxGuestAdditions.install -y"
+      ],
+      "only": ["virtualbox-iso"]
+    },
+    {
+      "type": "powershell",
+      "scripts": [
+        "./scripts/windows/disable-services.ps1",
+        "./scripts/windows/cleanup.ps1"
+      ]
+    },
+    {
+      "type": "windows-restart"
+    }
+  ],
+  "post-processors": [
+    {
+      "keep_input_artifact": false,
+      "output": "box/{{.Provider}}/{{user `vm_name`}}-{{user `cm`}}{{user `cm_version`}}-{{user `version`}}.box",
+      "type": "vagrant",
+      "vagrantfile_template": "{{ user `vagrantfile_template` }}"
+    }
+  ],
+  "variables": {
+    "cleanup_pause": "",
+    "cpus": "1",
+    "disk_size": "65536",
+    "ftp_proxy": "{{env `ftp_proxy`}}",
+    "headless": "false",
+    "http_proxy": "{{env `http_proxy`}}",
+    "https_proxy": "{{env `https_proxy`}}",
+    "iso_checksum": "865494e969704be1c4496d8614314361d025775e",
+    "iso_checksum_type": "sha1",
+    "iso_name": "en_windows_server_2012_r2_with_update_x64_dvd_6052708.iso",
+    "iso_path": "iso/windows",
+    "iso_url": "http://releases.ubuntu.com/14.04/ubuntu-14.04.3-server-amd64.iso",
+    "memory": "1024",
+    "no_proxy": "{{env `no_proxy`}}",
+    "hostname": "vagrant",
+    "winrm_password": "vagrant",
+    "winrm_username": "vagrant",
+    "update": "false",
+    "vagrantfile_template": "vagrantfile-windows.template",
+    "version": "0.1.0",
+    "virtualbox_guest_os_type": "Windows2012_64",
+    "vm_name": "Windows2012r2",
+    "vmware_guest_os_type": "Windows2012-64"
+  }
+}

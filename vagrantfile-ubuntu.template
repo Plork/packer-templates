@@ -1,0 +1,21 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+
+  config.vm.communicator = "ssh"
+
+  # Admin user name and password
+  config.ssh.username = "vagrant"
+  config.ssh.password = "vagrant"
+
+  config.vm.guest = :linux
+
+  config.vm.provider :virtualbox do |v, override|
+    #v.gui = true
+    v.customize ["modifyvm", :id, "--memory", 512]
+    v.customize ["modifyvm", :id, "--cpus", 1]
+    v.customize ["setextradata", "global", "GUI/SuppressMessages", "all" ]
+    end
+
+end
