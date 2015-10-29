@@ -11,8 +11,6 @@
       ],
       "guest_os_type": "{{ user `virtualbox_guest_os_type` }}",
       "headless": "{{ user `headless` }}",
-      "http_proxy": "{{env `http_proxy`}}",
-      "https_proxy": "{{env `https_proxy`}}",
       "iso_checksum": "{{ user `iso_checksum` }}",
       "iso_checksum_type": "{{ user `iso_checksum_type` }}",
       "iso_urls": [
@@ -37,8 +35,8 @@
           "setextradata", "global", "GUI/SuppressMessages", "all"
         ]
       ],
-      "winrm_username": "{{user `user`}}",
-      "winrm_password": "{{user `password`}}",
+      "winrm_username": "{{user `winrm_username`}}",
+      "winrm_password": "{{user `winrm_password`}}",
       "winrm_timeout": "6h"
     }
   ],
@@ -52,8 +50,8 @@
     },
     {
       "type":"powershell",
-      "elevated_user": "{{user `user`}}",
-      "elevated_password": "{{user `password`}}",
+      "elevated_user": "{{user `winrm_username`}}",
+      "elevated_password": "{{user `winrm_password`}}",
       "inline": [
         "choco install powershell -pre -y"
       ]
@@ -91,7 +89,7 @@
   "post-processors": [
     {
       "keep_input_artifact": false,
-      "output": "box/{{.Provider}}/{{user `vm_name`}}-{{user `cm`}}{{user `cm_version`}}-{{user `version`}}.box",
+      "output": "box/{{.Provider}}/{{user `vm_name`}}-{{user `version`}}.box",
       "type": "vagrant",
       "vagrantfile_template": "{{ user `vagrantfile_template` }}"
     }
@@ -108,7 +106,6 @@
     "iso_checksum_type": "sha1",
     "iso_name": "en_windows_server_2012_r2_with_update_x64_dvd_6052708.iso",
     "iso_path": "iso/windows",
-    "iso_url": "http://releases.ubuntu.com/14.04/ubuntu-14.04.3-server-amd64.iso",
     "memory": "1024",
     "no_proxy": "{{env `no_proxy`}}",
     "hostname": "vagrant",
