@@ -2,6 +2,8 @@
   "_comment": "Build with `packer build -var-file=ubuntu1404.json ubuntu.json`",
   "vm_name": "ubuntu1404",
   "cpus": "1",
+  "cm": "ansible",
+  "cm_version": "latest",
   "disk_size": "40960",
   "iso_checksum": "0501c446929f713eb162ae2088d8dc8b6426224a",
   "iso_checksum_type": "sha1",

@@ -1,16 +1,18 @@
-#!/bin/bash -eux
+#!/bin/sh -eux
 
-# Disable the release upgrader
-echo "==> Disabling the release upgrader"
-sed -i.bak 's/^Prompt=.*$/Prompt=never/' /etc/update-manager/release-upgrades
+# Update the package list
+apt-get update;
 
-echo "==> Updating list of repositories"
-# apt-get update does not actually perform updates, it just downloads and indexes the list of packages
-apt-get -y update
+# Upgrade all installed packages incl. kernel and kernel headers
+apt-get -y upgrade linux-generic;
 
-if [[ $UPDATE  =~ true || $UPDATE =~ 1 || $UPDATE =~ yes ]]; then
-    echo "==> Performing dist-upgrade (all packages and kernel)"
-    apt-get -y dist-upgrade --force-yes
-    reboot
-    sleep 60
-fi
+# ensure the correct kernel headers are installed
+apt-get -y install linux-headers-`uname -r`;
+
+# update package index on boot
+cat <<EOF >/etc/init/refresh-apt.conf;
+description "update package index"
+start on networking
+task
+exec /usr/bin/apt-get update
+EOF

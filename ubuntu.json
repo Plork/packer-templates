@@ -1,0 +1,197 @@
+{
+  "builders": [
+    {
+      "boot_command": [
+        "<esc><wait>",
+        "<esc><wait>",
+        "<enter><wait>",
+        "/install/vmlinuz<wait>",
+        " auto<wait>",
+        " console-setup/ask_detect=false<wait>",
+        " console-setup/layoutcode=us<wait>",
+        " console-setup/modelcode=pc105<wait>",
+        " debconf/frontend=noninteractive<wait>",
+        " debian-installer=en_US<wait>",
+        " fb=false<wait>",
+        " file=/floppy/preseed.cfg",
+        " initrd=/install/initrd.gz<wait>",
+        " kbd-chooser/method=us<wait>",
+        " keyboard-configuration/layout=USA<wait>",
+        " keyboard-configuration/variant=USA<wait>",
+        " locale=en_US<wait>",
+        " netcfg/get_domain=vm<wait>",
+        " netcfg/get_hostname={{ user `hostname` }} <wait>",
+        " noapic<wait>",
+        " passwd/user-fullname={{ user `ssh_fullname` }} ",
+        " passwd/user-password={{ user `ssh_password` }} ",
+        " passwd/user-password-again={{ user `ssh_password` }} ",
+        " passwd/username={{ user `ssh_username` }} ",
+        " -- <wait>",
+        "<enter><wait>"
+      ],
+      "disk_size": "{{ user `disk_size` }}",
+      "floppy_files": [
+        "http/{{user `preseed_path`}}"
+      ],
+      "guest_os_type": "{{ user `vmware_guest_os_type` }}",
+      "headless": "{{ user `headless` }}",
+      "http_directory": "http",
+      "iso_checksum": "{{ user `iso_checksum` }}",
+      "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+      "iso_urls": [
+        "{{ user `iso_path` }}/{{ user `iso_name` }}",
+        "{{ user `iso_url` }}"
+      ],
+      "output_directory": "output/{{ user `vm_name` }}-vmware-iso",
+      "shutdown_command": "echo '{{ user `ssh_password` }}'|sudo -S shutdown -P now",
+      "ssh_password": "{{ user `ssh_password` }}",
+      "ssh_username": "{{ user `ssh_username` }}",
+      "ssh_wait_timeout": "10000s",
+      "tools_upload_flavor": "linux",
+      "type": "vmware-iso",
+      "vm_name": "{{ user `vm_name` }}",
+      "vmx_data": {
+        "memsize": "{{ user `memory` }}",
+        "numvcpus": "{{ user `cpus` }}"
+      }
+    },
+    {
+      "boot_command": [
+        "<esc><wait>",
+        "<esc><wait>",
+        "<enter><wait>",
+        "/install/vmlinuz<wait>",
+        " auto<wait>",
+        " console-setup/ask_detect=false<wait>",
+        " console-setup/layoutcode=us<wait>",
+        " console-setup/modelcode=pc105<wait>",
+        " debconf/frontend=noninteractive<wait>",
+        " debian-installer=en_US<wait>",
+        " fb=false<wait>",
+        " file=/floppy/preseed.cfg",
+        " initrd=/install/initrd.gz<wait>",
+        " kbd-chooser/method=us<wait>",
+        " keyboard-configuration/layout=USA<wait>",
+        " keyboard-configuration/variant=USA<wait>",
+        " locale=en_US<wait>",
+        " netcfg/get_domain=vm<wait>",
+        " netcfg/get_hostname={{ user `hostname` }} <wait>",
+        " noapic<wait>",
+        " passwd/user-fullname={{ user `ssh_fullname` }} ",
+        " passwd/user-password={{ user `ssh_password` }} ",
+        " passwd/user-password-again={{ user `ssh_password` }} ",
+        " passwd/username={{ user `ssh_username` }} ",
+        " -- <wait>",
+        "<enter><wait>"
+      ],
+      "disk_size": "{{ user `disk_size` }}",
+      "floppy_files": [
+        "http/{{user `preseed_path`}}"
+      ],
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "guest_os_type": "{{ user `virtualbox_guest_os_type` }}",
+      "hard_drive_interface": "sata",
+      "headless": "{{ user `headless` }}",
+      "iso_checksum": "{{ user `iso_checksum` }}",
+      "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+      "iso_urls": [
+        "{{ user `iso_path` }}/{{ user `iso_name` }}",
+        "{{ user `iso_url` }}"
+      ],
+      "output_directory": "output/{{ user `vm_name` }}-virtualbox-iso",
+      "shutdown_command": "echo '{{ user `ssh_password` }}'|sudo -S shutdown -P now",
+      "ssh_password": "{{ user `ssh_password` }}",
+      "ssh_username": "{{ user `ssh_username` }}",
+      "ssh_wait_timeout": "10000s",
+      "type": "virtualbox-iso",
+      "vboxmanage": [
+        [
+          "modifyvm", "{{.Name}}", "--memory", "{{ user `memory` }}"
+        ],
+        [
+          "modifyvm", "{{.Name}}", "--cpus", "{{ user `cpus` }}"
+        ]
+      ],
+      "virtualbox_version_file": ".vbox_version",
+      "vm_name": "{{user `vm_name`}}"
+    }
+  ],
+  "post-processors": [
+    {
+      "keep_input_artifact": true,
+      "output": "box/{{.Provider}}/{{user `vm_name`}}-{{user `version`}}-{{user `cm`}}-{{.Provider}}.box",
+      "type": "vagrant",
+      "vagrantfile_template": "{{ user `vagrantfile_template` }}",
+      "only": [ "virtualbox-iso" ]
+    },
+    {
+      "keep_input_artifact": true,
+      "output": "box/{{.Provider}}/{{user `vm_name`}}-{{user `version`}}-{{user `cm`}}-{{.Provider}}.box",
+      "type": "vagrant-vmware-ovf",
+      "only": [ "vmware-iso" ]
+    }
+  ],
+  "provisioners": [
+    {
+      "environment_vars": [
+        "CM={{user `cm`}}",
+        "CM_VERSION={{user `cm_version`}}",
+        "CLEANUP_PAUSE={{user `cleanup_pause`}}",
+        "DOCKER={{user `docker`}}",
+        "UPDATE={{user `update`}}",
+        "INSTALL_VAGRANT_KEY={{user `install_vagrant_key`}}",
+        "SSH_USERNAME={{user `ssh_username`}}",
+        "SSH_PASSWORD={{user `ssh_password`}}",
+        "http_proxy={{user `http_proxy`}}",
+        "https_proxy={{user `https_proxy`}}",
+        "ftp_proxy={{user `ftp_proxy`}}",
+        "no_proxy={{user `no_proxy`}}"
+      ],
+      "execute_command": "echo '{{ user `ssh_password` }}' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
+      "scripts": [
+        "scripts/ubuntu/update.sh",
+        "scripts/ubuntu/vagrant.sh",
+        "scripts/ubuntu/sshd.sh",
+        "scripts/ubuntu/sudoers.sh",
+        "scripts/ubuntu/networking.sh",
+        "scripts/ubuntu/docker.sh",
+        "scripts/ubuntu/vmtools.sh",
+        "scripts/ubuntu/cmtool.sh",
+        "scripts/ubuntu/minimize.sh"
+      ],
+      "type": "shell"
+    }
+  ],
+  "variables": {
+    "cleanup_pause": "",
+    "cm": "nocm",
+    "cm_version": "",
+    "cpus": "1",
+    "custom_script": ".",
+    "disk_size": "40960",
+    "docker": "",
+    "ftp_proxy": "{{env `ftp_proxy`}}",
+    "headless": "",
+    "http_proxy": "{{env `http_proxy`}}",
+    "https_proxy": "{{env `https_proxy`}}",
+    "install_vagrant_key": "true",
+    "iso_checksum": "0501c446929f713eb162ae2088d8dc8b6426224a",
+    "iso_checksum_type": "sha1",
+    "iso_name": "ubuntu-14.04.3-server-amd64.iso",
+    "iso_path": "iso/ubuntu",
+    "iso_url": "http://releases.ubuntu.com/14.04/ubuntu-14.04.3-server-amd64.iso",
+    "memory": "512",
+    "no_proxy": "{{env `no_proxy`}}",
+    "preseed_path": "ubuntu-14.04/preseed.cfg",
+    "hostname": "vagrant",
+    "ssh_fullname": "vagrant",
+    "ssh_password": "vagrant",
+    "ssh_username": "vagrant",
+    "update": "false",
+    "vagrantfile_template": "vagrantfile-ubuntu.template",
+    "version": "0.1.0",
+    "virtualbox_guest_os_type": "Ubuntu_64",
+    "vm_name": "ubuntu1404",
+    "vmware_guest_os_type": "ubuntu-64"
+  }
+}
